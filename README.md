@@ -151,8 +151,3 @@ License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-
-Do you also want me to make a **badge-style header** (e.g., Python version, License, Stars, etc.) so it lo
-
-The repository is structured as follows:
-
