@@ -34,8 +34,14 @@ This project includes a Docker container for easy deployment and inference. The 
 
 - **Base Image**: Ubuntu 22.04 with NVIDIA CUDA 11.8
 - **Python**: Python 3 with pip
-- **Dependencies**: All packages from `requirements.txt` pre-installed
+- **CUDA Version**: 11.8.0
+- **Dependencies**: All packages from `requirements.txt` pre-installed (~5.63 GB)
 - **Working Directory**: `/workspace`
+- **Pre-installed Components**:
+  - Segmentation models in `/workspace/segmentation/`
+  - Pre-trained ensemble models in `/workspace/models/`
+  - Model checkpoints in `/workspace/checkpoints/`
+  - Inference scripts: `inference.py`, `build_tensor.py`, `run_inference.sh`
 
 ### Building the Docker Image
 
@@ -43,15 +49,45 @@ This project includes a Docker container for easy deployment and inference. The 
 docker build -t recap-net:latest .
 ```
 
+**Note**: The build process will:
+- Install CUDA 11.8 runtime and compatibility packages
+- Install Python 3 and pip
+- Install all dependencies from `requirements.txt` (this may take several minutes)
+- Copy segmentation models, ensemble models, and checkpoints
+- Set up the inference scripts
+
 ### Running Inference with Docker
+
+The Docker container expects two arguments: test data directory and output directory.
 
 ```bash
 docker run --gpus all \
-  -v /path/to/test/data:/workspace/input/data \
+  -v /path/to/test/data:/workspace/test_data \
   -v /path/to/output:/workspace/output \
   recap-net:latest \
-  /workspace/run_inference.sh /workspace/input/data /workspace/output
+  /workspace/run_inference.sh /workspace/test_data /workspace/output
 ```
+
+**Parameters**:
+- `--gpus all`: Enables GPU access (required for inference)
+- `-v /path/to/test/data:/workspace/test_data`: Mounts your test data directory
+- `-v /path/to/output:/workspace/output`: Mounts output directory for predictions
+- `/workspace/run_inference.sh`: The inference script (automatically executed)
+- Arguments: `TEST_DATA_DIR` and `PRED_DIR` paths inside the container
+
+**Example**:
+```bash
+docker run --gpus all \
+  -v /home/user/brats_test_data:/workspace/test_data \
+  -v /home/user/predictions:/workspace/output \
+  recap-net:latest \
+  /workspace/run_inference.sh /workspace/test_data /workspace/output
+```
+
+**Requirements**:
+- NVIDIA Docker runtime installed
+- NVIDIA drivers >= 470 (for CUDA 11.8)
+- GPU with compute capability 3.5 or higher
 
 ## 📁 Project Structure
 
@@ -87,7 +123,7 @@ brats_response_project/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Deepaksn19/brats_response_project.git
+   git clone https://github.com/HARSHDIPSAHA/brats_response_project.git
    cd brats_response_project
    ```
 
