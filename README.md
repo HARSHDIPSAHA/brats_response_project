@@ -1,153 +1,331 @@
-# brats_response_project
 # RECAP-Net: RANO Ensemble for Classification of Active Progression
 
-[cite_start]This repository contains the official implementation for **RECAP-Net**, an end-to-end deep learning pipeline for classifying glioblastoma treatment response from longitudinal MRI scans[cite: 9].  
-[cite_start]This work was developed for the BraTS 2025 Tumor Progression Challenge and uses an ensemble of 3D CNNs to assess tumor progression based on the Response Assessment in Neuro-Oncology (RANO) criteria[cite: 8, 16].
+[![MICCAI 2025](https://img.shields.io/badge/MICCAI-2025-blue)](https://miccai.org/)
+[![BraTS 2025](https://img.shields.io/badge/BraTS-2025-green)](https://www.synapse.org/)
+[![Rank](https://img.shields.io/badge/Rank-3rd%20Place-gold)](https://www.synapse.org/)
 
----
+**Official implementation of RECAP-Net for the BraTS 2025 Tumor Progression Challenge**
 
-## Table of Contents
+This repository contains the official implementation for **RECAP-Net**, an end-to-end deep learning pipeline for classifying glioblastoma treatment response from longitudinal MRI scans. This work was developed for the BraTS 2025 Tumor Progression Challenge and achieved **World Rank 3**, with the paper accepted at **MICCAI 2025, South Korea**.
 
-- [Features](#features)
-- [Folder Structure](#folder-structure)
-- [Setup](#setup)
-- [Usage](#usage)
-- [Dependencies](#dependencies)
-- [References](#references)
-- [License](#license)
+## 🏆 Achievements
 
----
+- **World Rank 3** in BraTS 2025 Tumor Progression Challenge
+- **Accepted** at MICCAI 2025, South Korea
+- Ensemble-based approach using RANO (Response Assessment in Neuro-Oncology) criteria
 
-## Features
+## 📋 Overview
 
-- **End-to-End Pipeline**: A complete deep learning pipeline for classifying glioblastoma treatment response from MRI scans[cite: 9].
-- **Custom Segmentation**: Employs a fine-tuned Swin UNETR model for accurate tumor segmentation, which is then used as an input channel for the classifier[cite: 9, 60, 124].
-- **Ensemble Learning**: Integrates three distinct 3D CNN architectures (ResNet-18, DenseNet-121, EfficientNet-B0) to improve prediction robustness and accuracy[cite: 9, 85].
-- **Temporal Change Highlighting**: Uses channel augmentation by creating voxel-wise difference maps between baseline and follow-up scans to explicitly guide the model's focus on areas of change[cite: 89, 98].
-- **Class Imbalance Handling**: Utilizes a conditional 3D SN-GAN for synthetic data augmentation to effectively handle class imbalance in the training dataset[cite: 9, 58, 75].
+RECAP-Net uses an ensemble of 3D CNNs to assess tumor progression based on the Response Assessment in Neuro-Oncology (RANO) criteria. The system integrates multiple deep learning components to achieve robust and accurate classification of active progression in glioblastoma patients.
 
----
+## ✨ Key Features
 
-## Folder Structure
+- **End-to-End Pipeline**: Complete deep learning pipeline for classifying glioblastoma treatment response from MRI scans
+- **Custom Segmentation**: Fine-tuned Swin UNETR model for accurate tumor segmentation, used as an input channel for the classifier
+- **Ensemble Learning**: Integrates three distinct 3D CNN architectures (ResNet-18, DenseNet-121, EfficientNet-B0) for improved robustness and accuracy
+- **Temporal Change Highlighting**: Channel augmentation using voxel-wise difference maps between baseline and follow-up scans to guide model focus on areas of change
+- **Class Imbalance Handling**: Conditional 3D SN-GAN for synthetic data augmentation to effectively handle class imbalance
+
+## 🐳 Docker Support
+
+This project includes a Docker container for easy deployment and inference. The Docker image is based on NVIDIA CUDA 11.8 and includes all necessary dependencies.
+
+### Docker Image Details
+
+- **Base Image**: Ubuntu 22.04 with NVIDIA CUDA 11.8
+- **Python**: Python 3 with pip
+- **Dependencies**: All packages from `requirements.txt` pre-installed
+- **Working Directory**: `/workspace`
+
+### Building the Docker Image
+
+```bash
+docker build -t recap-net:latest .
+```
+
+### Running Inference with Docker
+
+```bash
+docker run --gpus all \
+  -v /path/to/test/data:/workspace/input/data \
+  -v /path/to/output:/workspace/output \
+  recap-net:latest \
+  /workspace/run_inference.sh /workspace/input/data /workspace/output
+```
+
+## 📁 Project Structure
+
+```
 brats_response_project/
-├── Dockerfile # For building the Docker container
-├── README.md # This file
-├── requirements.txt # Python dependencies
-├── run_inference.sh # Script to execute inference
+├── Dockerfile              # Docker container configuration
+├── README.md               # This file
+├── requirements.txt        # Python dependencies
+├── run_inference.sh        # Inference execution script
 ├── entrypoints/
-│ └── infer.py # Main inference script
+│   └── infer.py           # Main inference entrypoint
 ├── input/
-│ ├── data/ # Location for input MRI scans
-│ └── model/ # Location for pre-trained model weights
-├── output/ # Directory for model outputs (e.g., predictions)
-│ └── .gitkeep
+│   ├── data/              # Input MRI scans directory
+│   └── model/             # Pre-trained model weights directory
+├── output/                # Model outputs (predictions, logs)
 └── src/
-├── data/ # Data loading and preprocessing scripts
-├── eval/ # Evaluation metric scripts
-├── train/ # Model training scripts
-├── configEnsemble.py # Configuration for the ensemble
-└── mainEnsemble.py # Main training script for the ensemble
+    ├── configEnsemble.py  # Ensemble configuration
+    ├── mainEnsemble.py    # Main training script
+    ├── data/              # Data loading and preprocessing
+    ├── eval/              # Evaluation scripts
+    └── train/             # Training scripts
+```
 
+## 🚀 Quick Start
 
-### Detailed File Descriptions
+### Prerequisites
 
-#### `run_inference.sh`
-A shell script that orchestrates the inference process by running the `infer.py` entrypoint.
+- Python 3.8+
+- CUDA 11.8+ (for GPU acceleration)
+- Docker (optional, for containerized deployment)
 
----
-
-#### `entrypoints/`
-Contains the primary script for running model inference.
-- **infer.py**: Loads a trained model and processes new data from the `input/` directory to generate predictions.
-
----
-
-#### `input/`
-This directory serves as the main folder for all input data and models.
-- **data/**: Intended for storing pre-processed MRI scans and related data for training or inference.
-- **model/**: Used to store the pre-trained model checkpoints.
-
----
-
-#### `output/`
-This directory is designated for storing all generated outputs, such as prediction files, evaluation metrics, and logs.  
-It contains a `.gitkeep` placeholder to ensure the directory is tracked by Git even when empty.
-
----
-
-#### `src/`
-Contains all the core source code for the project.
-- **mainEnsemble.py**: The main script used to start the training process for the ensemble model.
-- **configEnsemble.py**: A configuration file to manage hyperparameters, model paths, and other settings for the ensemble.
-- **data/**, **eval/**, **train/**: Subdirectories containing modular scripts for data handling, model evaluation, and the training logic, respectively.
-
----
-
-## Setup
+### Installation
 
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/Deepaksn19/brats_response_project.git
    cd brats_response_project
-Create and activate a virtual environment:
+   ```
 
-python3 -m venv venv
-source venv/bin/activate
+2. **Create and activate a virtual environment:**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Install the required dependencies from requirements.txt:
+## 💻 Usage
 
+### Training
+
+1. Place your pre-processed training data (following the BraTS directory structure) into the `input/data/` folder.
+
+2. Adjust hyperparameters or paths in `src/configEnsemble.py` if needed.
+
+3. Run the training script:
+   ```bash
+   python src/mainEnsemble.py
+   ```
+
+### Inference
+
+1. Place your pre-trained model weights in `input/model/` directory.
+
+2. Place the data to be processed in `input/data/`.
+
+3. Execute the inference script:
+   ```bash
+   bash run_inference.sh /path/to/test/data /path/to/output
+   ```
+
+   Or using the entrypoint directly:
+   ```bash
+   python entrypoints/infer.py --test_data_dir /path/to/test/data --pred_dir /path/to/output
+   ```
+
+4. Predictions will be saved in the specified output directory.
+
+## 📦 Dependencies
+
+Key dependencies include:
+
+- `torch` - PyTorch deep learning framework
+- `monai` - Medical imaging AI framework
+- `torchio` - Medical image preprocessing
+- `numpy` - Numerical computing
+
+For the complete list, see `requirements.txt`. Install all dependencies with:
+
+```bash
 pip install -r requirements.txt
+```
 
-Usage
-Training
+## 🏗️ Architecture
 
-Place your pre-processed training data (following the BraTS directory structure) into the input/data/ folder.
+### System Overview
 
-Adjust any hyperparameters or paths in the src/configEnsemble.py file.
+RECAP-Net is an end-to-end deep learning pipeline that processes longitudinal MRI scans to classify glioblastoma treatment response according to RANO criteria. The architecture consists of four main components working in tandem.
 
-Run the main training script:
+### Input Processing
 
-python src/mainEnsemble.py
+**Multi-Modal Input Preparation:**
+- **Input Modalities**: 4 baseline MRI sequences (T1, T1ce, T2, FLAIR) + 4 follow-up MRI sequences
+- **Segmentation Masks**: 2 masks (baseline and follow-up) from Swin UNETR segmentation
+- **Total Channels**: 10-channel tensor (8 MRI modalities + 2 segmentation masks)
+- **Spatial Resolution**: Standardized to 256×256×256 voxels
 
-Inference
+**Preprocessing Pipeline:**
+1. **Intensity Normalization**: Z-score normalization per modality
+   ```
+   I_norm(x) = (I(x) - μ) / σ
+   ```
+   where μ and σ are computed over brain voxels only
 
-Place your pre-trained model weights in the input/model/ directory and the data to be processed in input/data/.
+2. **Spatial Standardization**:
+   - Center-cropping for volumes larger than 256×256×256
+   - Symmetric zero-padding for volumes smaller than 256×256×256
+   - Ensures uniform input dimensions for batch processing
 
-Execute the inference script. The script is designed to automatically find the models and data from the input/ directory.
+### Component 1: Swin UNETR Segmentation
 
-bash run_inference.sh
+**Purpose**: Generate accurate tumor segmentation masks for both baseline and follow-up scans
 
+**Architecture**:
+- **Base Model**: Swin UNETR (Swin Transformer-based U-Net for 3D medical image segmentation)
+- **Output Classes**: 
+  - Background (0)
+  - Peritumoral edema (1)
+  - Enhancing tumor core (2)
+- **Fine-tuning**: Pre-trained on medical imaging datasets, fine-tuned on LUMIERE dataset
+- **Integration**: Segmentation masks are concatenated as additional input channels to guide the classifier
 
-The output predictions will be saved in the output/ directory.
+### Component 2: Conditional 3D SN-GAN (Data Augmentation)
 
-Dependencies
+**Purpose**: Address class imbalance (3:2:1:1 distribution across RANO classes) through synthetic data generation
 
-Ensure you have the following key Python libraries installed. You can install all of them using the requirements.txt file.
+**Architecture**:
+- **Type**: Conditional 3D Spectral Normalized Generative Adversarial Network
+- **Input**: 8-channel temporal MRI volumes (4 baseline + 4 follow-up modalities)
+- **Training**: Trained on complete longitudinal scan data to learn realistic tumor progression patterns
+- **Output**: Synthetic 8-channel MRI volumes representing plausible tumor progressions
+- **Segmentation Integration**: Generated scans are passed through Swin UNETR to produce corresponding segmentation masks
+- **Result**: Each synthetic sample includes 10-channel tensor (8 MRI + 2 masks) ready for classification
 
-torch
+### Component 3: Ensemble of 3D CNNs
 
-monai
+**Architecture**: Three independent 3D convolutional neural networks:
 
-torchio
+1. **ResNet-18 (3D)**
+   - Residual connections for gradient flow
+   - 18-layer deep architecture adapted for 3D medical imaging
+   - Processes 10-channel input tensors
 
-numpy
+2. **DenseNet-121 (3D)**
+   - Dense connectivity pattern for feature reuse
+   - 121-layer architecture with dense blocks
+   - Efficient parameter utilization
 
-Install all dependencies via pip:
+3. **EfficientNet-B0 (3D)**
+   - Compound scaling for optimal efficiency
+   - Balanced depth, width, and resolution
+   - Lightweight yet powerful architecture
 
-pip install -r requirements.txt
+**Input Format**: All three models receive the same 10-channel tensor (256×256×256)
 
-References
+**Output**: Each model produces probability distributions over 4 RANO classes:
+- Complete Response (CR) = 0
+- Partial Response (PR) = 1
+- Stable Disease (SD) = 2
+- Progressive Disease (PD) = 3
 
-RECAP-Net: Our model, an ensemble of ResNet-18, DenseNet-121, and EfficientNet-B0, designed for RANO classification.
+### Component 4: Soft Voting Ensemble
 
-Swin UNETR: Transformer-based architecture used for 3D medical image segmentation.
+**Combination Strategy**: Soft voting aggregates predictions from all three models
 
-MONAI: An open-source PyTorch-based framework for deep learning in healthcare imaging.
+**Process**:
+1. Each model outputs class probabilities: [P(CR), P(PR), P(SD), P(PD)]
+2. Probabilities are averaged across all three models
+3. Final prediction: Class with highest average probability
 
-LUMIERE Dataset: The dataset used for training and evaluation, curated for the BraTS-PRO 2025 challenge.
+**Advantages**:
+- Reduces overfitting by combining diverse architectures
+- Improves robustness through model diversity
+- Better generalization to unseen data
 
-License
+### Temporal Change Highlighting
+
+**Feature Enhancement**: 
+- Voxel-wise difference maps computed between baseline and follow-up scans
+- Highlights regions of change (growth, shrinkage, enhancement)
+- Guides model attention to clinically relevant areas
+- Integrated into the input tensor through channel augmentation
+
+## 🔄 Workflow
+
+### Training Pipeline
+
+1. **Data Preprocessing**
+   - Load baseline and follow-up MRI volumes
+   - Apply z-score normalization per modality
+   - Standardize spatial dimensions to 256×256×256
+   - Concatenate into 10-channel tensors
+
+2. **GAN Training** (if using synthetic augmentation)
+   - Train conditional 3D SN-GAN on longitudinal MRI data
+   - Generate synthetic samples for underrepresented classes
+   - Generate segmentation masks for synthetic data using Swin UNETR
+
+3. **Segmentation Model Training**
+   - Fine-tune Swin UNETR on LUMIERE dataset
+   - Generate segmentation masks for all training samples
+
+4. **Ensemble Model Training**
+   - Train ResNet-18, DenseNet-121, and EfficientNet-B0 independently
+   - Each model learns from 10-channel input tensors
+   - Optimize using cross-entropy loss with class weighting
+
+5. **Validation**
+   - Evaluate each model separately
+   - Test ensemble performance with soft voting
+   - Select best model checkpoints
+
+### Inference Pipeline
+
+1. **Input Preparation**
+   - Load baseline and follow-up MRI volumes
+   - Apply same preprocessing as training (normalization, resizing)
+
+2. **Segmentation**
+   - Generate tumor masks using pre-trained Swin UNETR
+   - Concatenate masks with MRI volumes (10-channel tensor)
+
+3. **Classification**
+   - Pass 10-channel tensor through all three ensemble models
+   - Collect probability distributions from each model
+
+4. **Ensemble Prediction**
+   - Average probabilities across all three models
+   - Select class with highest probability
+   - Output RANO response category
+
+## 📊 Performance
+
+On the augmented LUMIERE dataset, RECAP-Net achieves:
+
+| Metric | Score |
+|--------|-------|
+| **Balanced Accuracy** | 0.9400 |
+| **F1 Score** | 0.9460 |
+| **True Positive Rate (TPR)** | 0.9510 |
+| **True Negative Rate (TNR)** | 0.9550 |
+| **Precision** | 0.9420 |
+| **AUROC** | 0.9600 |
+
+The ensemble approach significantly outperforms individual models, demonstrating the effectiveness of combining multiple architectures for robust classification.
+
+## 📄 License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
+## 🙏 Acknowledgments
+
+- BraTS 2025 Challenge organizers
+- MICCAI 2025 conference
+- LUMIERE Dataset contributors
+- MONAI framework developers
+
+## 📧 Contact
+
+For questions or issues, please open an issue on GitHub or contact the maintainers.
+
+---
+
+**Note**: This implementation was developed for the BraTS 2025 Tumor Progression Challenge and achieved World Rank 3. The paper was accepted at MICCAI 2025, South Korea.
